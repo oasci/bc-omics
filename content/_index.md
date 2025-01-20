@@ -23,7 +23,6 @@ Yet, generational barriers outside of an individual's influence hinder a person'
 Breadcrumbs represents [OASCI's](https://www.oasci.org/) initiative to fundamentally transform access to educational materials, embodying the spirit of discovery and the sharing of knowledge fragments that have traditionally been accessible only through the goodwill of others.
 Breadcrumb websites are freely accessible resources, and we encourage contributions, improvements, and adaptations so long as they abide by the terms outlined in the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.
 
-
 ## License
 
 Code contained in this project is released under the [MIT License](https://spdx.org/licenses/MIT.html) as specified in [`LICENSE_CODE`](https://github.com/oasci-bc/omics/blob/main/LICENSE_CODE.md).

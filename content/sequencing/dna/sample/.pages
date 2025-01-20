@@ -1,0 +1,9 @@
+nav:
+    - index.md
+    - lysis
+    - purification
+    - quantification
+    - fragmentation
+    - ligation
+    - amplification
+    - qc

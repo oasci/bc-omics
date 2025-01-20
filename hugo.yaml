@@ -1,5 +1,5 @@
 # Hugo configuration file
-title: handbook
+title: Omics
 baseURL: https://handbook.oasci.org/
 languageCode: en-us
 
@@ -15,6 +15,12 @@ markup:
   goldmark:
     renderer:
       unsafe: true
+    extensions:
+      passthrough:
+        delimiters:
+          block: [['\[', '\]'], ['$$', '$$']]
+          inline: [['\(', '\)']]
+        enable: true
 
   # enable hextra syntax highlight
   highlight:
@@ -22,9 +28,21 @@ markup:
 
 menu:
   main:
-    - name: People
-      pageRef: /people
+    - name: Sequencing
+      pageRef: /sequencing
       weight: 1
+    - name: Genomics
+      pageRef: /genomics
+      weight: 2
+    - name: Alignment
+      pageRef: /alignment
+      weight: 3
+    - name: Transcriptomics
+      pageRef: /transcriptomics
+      weight: 4
+    - name: Appendices
+      pageRef: /appendices
+      weight: 5
     - name: Search
       weight: 5
       params:
@@ -41,10 +59,9 @@ params:
     displayLogo: true
     logo:
       path: img/logo.svg
-    width: 90%
   
   page:
-    width: normal
+    width: wide
   
   theme:
     default: system
