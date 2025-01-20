@@ -1,0 +1,74 @@
+# Hugo configuration file
+title: handbook
+baseURL: https://handbook.oasci.org/
+languageCode: en-us
+
+enableGitInfo: true
+
+module:
+  imports:
+    - path: github.com/imfing/hextra
+
+
+markup:
+  # allow raw html
+  goldmark:
+    renderer:
+      unsafe: true
+
+  # enable hextra syntax highlight
+  highlight:
+    noClasses: false
+
+menu:
+  main:
+    - name: People
+      pageRef: /people
+      weight: 1
+    - name: Search
+      weight: 5
+      params:
+        type: search
+    - name: GitHub
+      weight: 6
+      url: "https://github.com/oasci/handbook"
+      params:
+        icon: github
+
+params:
+  navbar:
+    displayTitle: true
+    displayLogo: true
+    logo:
+      path: img/logo.svg
+    width: 90%
+  
+  page:
+    width: normal
+  
+  theme:
+    default: system
+    displayToggle: true
+
+  footer:
+    enable: true
+    displayCopyright: false
+    displayPoweredBy: false
+    width: normal
+  
+  displayUpdatedDate: true
+  dateFormat: "January 2, 2006"
+
+  search:
+    enable: true
+    type: flexsearch
+  
+  highlight:
+    copy:
+      enable: true
+      # hover | always
+      display: hover
+
+  editURL:
+    enable: true
+    base: "https://github.com/oasci/handbook/edit/main/content"
