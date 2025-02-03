@@ -175,3 +175,12 @@ Some of this material was adapted with permission from the following sources:
 -   [Homology](https://en.wikipedia.org/wiki/Homology_(biology))
 -   [Consensus sequence](https://en.wikipedia.org/wiki/Consensus_sequence)
 -   [Sequence Logos](https://en.wikipedia.org/wiki/Sequence_logo)
+
+## Resources
+
+-   Singh, T. R., Saini, H., Comar Jr., M. (2024). *Bioinformatics and computational biology: Technological advancements, applications, and opportunities*. CRC Press.
+-   Hasija, Y. (2023). *All about Bioinformatics: From Beginner to Expert*. Elsevier.
+-   Chateau, A., & Salson, M. (Eds.). (2022). *From Sequences to Graphs: Discrete Methods and Structures for Bioinformatics*. John Wiley & Sons.
+-   Lesk, A. M. (2014) *Introduction to Bioinformatics*, 4th Ed. Oxford University Press.
+-   Jones, N. C., & Pevzner, P. A. (2004). *An introduction to bioinformatics algorithms*. MIT press.
+-   Durbin, R. (1998). *Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids*.
