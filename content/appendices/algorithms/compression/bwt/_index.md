@@ -27,26 +27,25 @@ This capability is crucial for aligning sequences to reference genomes, identify
 The first step in the BWT is to construct a matrix that includes all possible rotations of the input string.
 To do this, we take the input string and rotate it one character at a time, prepending each rotation to a matrix.
 
-??? note "Code"
 
-    ```python
-    def create_rotations(input_string):
-        rotations = []
-        length = len(input_string)
-        # Concatenate the string with itself to simplify rotation
-        temp_string = input_string + input_string
-        # Generate all rotations
-        for i in range(length):
-            rotations.prepend(temp_string[i:i+length])
-        return rotations
-    ```
+```python
+def create_rotations(input_string):
+    rotations = []
+    length = len(input_string)
+    # Concatenate the string with itself to simplify rotation
+    temp_string = input_string + input_string
+    # Generate all rotations
+    for i in range(length):
+        rotations.prepend(temp_string[i:i+length])
+    return rotations
+```
 
 Here is an example for each stage of processing the input `banana$` using the Burrows-Wheeler Transform (BWT).
 
-!!! note
-
-    It's common to prepend a special character (like `$`) to the end of the input string to signify the end of the string.
-    This character should be unique and lexicographically smaller than any other character in the string to ensure it sorts properly.
+> [!NOTE]
+> 
+> It's common to prepend a special character (like `$`) to the end of the input string to signify the end of the string.
+> This character should be unique and lexicographically smaller than any other character in the string to ensure it sorts properly.
 
 The matrix consisting of all possible rotations of the input string `banana$`.
 We have **bolded** all of the suffixes in the BWT.
@@ -67,12 +66,10 @@ This process preserves the "neighborhood" of characters, meaning that characters
 After creating the matrix of all possible rotations, the next step is to sort these rotations lexicographically (i.e., in dictionary order).
 This step reorganizes the matrix into a more structured form that is essential for the next step of the transform.
 
-??? note "Code"
-
-    ```python
-    def sort_rotations(rotations):
-        return sorted(rotations)
-    ```
+```python
+def sort_rotations(rotations):
+    return sorted(rotations)
+```
 
 The sorted rotations of the input string, lexicographically:
 
@@ -94,13 +91,11 @@ For example, we see **an** and **na** patterns are present and sorted near each 
 The final step in the Burrows-Wheeler Transform is to extract the last column of the sorted matrix.
 This column contains the transformed string, which tends to have runs of similar characters, making it more amenable to compression.
 
-??? note "Code"
-
-    ```python
-    def extract_last_column(sorted_rotations):
-        last_column = ''.join(rotation[-1] for rotation in sorted_rotations)
-        return last_column
-    ```
+```python
+def extract_last_column(sorted_rotations):
+    last_column = ''.join(rotation[-1] for rotation in sorted_rotations)
+    return last_column
+```
 
 The last column of this sorted matrix, which is the transformed string: **`annb$aa`**
 
@@ -267,30 +262,28 @@ This iterative sorting and pairing process continues until the entire document i
 
 The row that ends with the special "end of file" character (e.g., `$` in our case) indicates the original document: **`banana$`**.
 
-??? note "Code"
+```python
+def invert_burrows_wheeler(last_column):
+    # Initialize a list to hold tuples of (character, index) for sorting
+    char_tuples = [(char, i) for i, char in enumerate(last_column)]
 
-    ```python
-    def invert_burrows_wheeler(last_column):
-        # Initialize a list to hold tuples of (character, index) for sorting
-        char_tuples = [(char, i) for i, char in enumerate(last_column)]
+    # Sort the tuples by character to simulate the first column
+    first_column_tuples = sorted(char_tuples)
 
-        # Sort the tuples by character to simulate the first column
-        first_column_tuples = sorted(char_tuples)
+    # Reconstruct the document using a table of indices
+    text_length = len(last_column)
+    # Initialize the index for the row that starts with the EOF character (assuming it's at the end)
+    current_index = last_column.index('$')
+    original_text = [''] * text_length
 
-        # Reconstruct the document using a table of indices
-        text_length = len(last_column)
-        # Initialize the index for the row that starts with the EOF character (assuming it's at the end)
-        current_index = last_column.index('$')
-        original_text = [''] * text_length
+    for i in range(text_length):
+        char, next_index = first_column_tuples[current_index]
+        original_text[i] = char
+        current_index = next_index
 
-        for i in range(text_length):
-            char, next_index = first_column_tuples[current_index]
-            original_text[i] = char
-            current_index = next_index
-
-        # Return the reconstructed text as a string
-        return ''.join(original_text)
-    ```
+    # Return the reconstructed text as a string
+    return ''.join(original_text)
+```
 
 <!-- REFERENCES -->
 
