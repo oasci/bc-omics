@@ -5,11 +5,9 @@ toc: false
 ---
 
 
-!!! warning "Preliminaries"
-
-    We assume you are familiar with the following material:
-
-    -   [Burrows–Wheeler transform](../../compression/bwt/)
+> [!warning] "Preliminaries"
+> We assume you are familiar with the following material:
+> -   [Burrows–Wheeler transform](../../compression/bwt/)
 
 In the realm of computer science, the ability to efficiently search through vast amounts of text is a cornerstone of numerous applications, from the intricate analysis of genetic sequences to the retrieval of information in large databases.
 The FM-index stands as a pivotal innovation in this domain, offering a sophisticated yet practical solution to the challenge of text searching.
@@ -98,9 +96,10 @@ The number attached to each letter is actually called the rank; the higher the n
 Ranks communicate how many times that letter occurs in the original string.
 "a" in our case has the highest rank of 4, which means there are a total of five a's in our string.
 
-!!! note
-
-    In the context of the BWT, the rank of a character within the L column does not simply indicate how many times the character appears, but rather its sequential position among identical characters within that column. This is a crucial point because the BWT, by design, groups similar characters together due to the sorting of all cyclic permutations of the original string. The rank tells us not just about the quantity of occurrences but about the order of each occurrence within the transformed string.
+> [!note]
+> In the context of the BWT, the rank of a character within the L column does not simply indicate how many times the character appears, but rather its sequential position among identical characters within that column.
+> This is a crucial point because the BWT, by design, groups similar characters together due to the sorting of all cyclic permutations of the original string.
+> The rank tells us not just about the quantity of occurrences but about the order of each occurrence within the transformed string.
 
 The power of this rank is that the F letter with the same rank as a L letter is the same letter from the original string.
 Don't believe me?
@@ -180,11 +179,9 @@ r<sub>1</sub>&nbsp;acadabra\$a&nbsp;b<sub>1</sub><br>
 
 Similar to our reversing the BWT, we perform successive LF mapping but we first reverse our search string (i.e., arb).
 
-!!! note
-
-    We actually did this in the previous section by starting from the first row that begins with \$.
-
-First, we find all rows that start with "a".
+> [!note]
+> We actually did this in the previous section by starting from the first row that begins with \$.
+> First, we find all rows that start with "a".
 
 F&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L<br>
 &nbsp;\$&nbsp;&nbsp;abracadabr&nbsp;a<sub>0</sub><br>
