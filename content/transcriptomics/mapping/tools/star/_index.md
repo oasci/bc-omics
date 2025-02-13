@@ -1,5 +1,5 @@
 ---
-title: Spliced Transcripts Alignment to a Reference
+title: STAR
 type: docs
 ---
 

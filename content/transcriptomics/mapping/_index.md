@@ -1,13 +1,13 @@
 ---
 title: Read mapping
 type: docs
-weight: 1
+weight: 3
 ---
 
 
 Splicing is a crucial process in gene expression where introns (non-coding regions) are removed from pre-mRNA transcripts, and exons (coding regions) are joined together.
 
-> ![](https://www.cshl.edu/wp-content/uploads/2018/08/exons_introns_splicing.jpg){ alight=left width=600 }
+> ![](https://www.cshl.edu/wp-content/uploads/2018/08/exons_introns_splicing.jpg)
 > 
 > Credit: [Cold Spring Harbor Laboratory](https://www.cshl.edu/predicting-how-splicing-errors-impact-disease-risk/)
 
