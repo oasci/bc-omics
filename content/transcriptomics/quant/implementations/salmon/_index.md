@@ -183,42 +183,166 @@ The effective transcript length, $\ell^\circ_i$, is calculated using the empiric
 
 ## Inference
 
+Inference is the process of estimating the underlying transcript abundances from the observed RNA-seq data using our generative model.
+Given the complex nature of fragment generation and the presence of technical biases, robust inference methods are required to accurately disentangle the contributions of each transcript. In our framework, inference leverages the detailed fragment–transcript agreement and bias corrections to compute the most likely set of transcript abundances that explain the observed data.
+
+To manage the immense scale and complexity of RNA-seq datasets, our inference strategy is divided into two distinct phases: an online phase and an offline phase.
+
+-   The online phase quickly processes data in a streaming fashion, providing rapid, initial estimates of transcript abundances while simultaneously learning auxiliary parameters, including bias corrections.
+-   The offline phase then refines these preliminary estimates by iteratively optimizing a reduced representation of the data, ensuring that the final abundance estimates are both precise and robust.
+
+This two-phase approach balances computational efficiency with accuracy, enabling the model to scale to large datasets while effectively capturing the underlying biological signal.
+
 ### Online
 
-The online inference phase of Salmon's algorithm is designed to tackle the challenge of estimating transcript abundances from RNA-sequencing data.
-This phase employs a variant of stochastic collapsed variational Bayesian inference to optimize a collapsed variational objective function.
-The inference procedure operates as a streaming algorithm, updating estimated read counts after processing small groups of observations (mini-batches).
-These updates are done asynchronously and in parallel, aiming to make efficient use of computational resources.
+The online inference phase is designed to rapidly and efficiently estimate transcript abundances from large RNA-seq datasets by processing fragments as they are streamed.
+This phase updates both the primary parameters (transcript counts) and auxiliary parameters (bias models and fragment-length distributions) on-the-fly, using a variant of the online Expectation–Maximization (EM) algorithm.
 
-During the online phase, Salmon estimates initial expression levels, auxiliary parameters, and foreground bias models.
-It also constructs equivalence classes over the input fragments, which serve as a highly reduced representation of the sequencing experiment.
-This strategy helps manage the complexity of the data by grouping together fragments that provide similar information about transcript abundances.
+In a traditional batch EM algorithm, all data are reprocessed multiple times to update parameter estimates until convergence is achieved. However, as sequencing depths grow, this method becomes prohibitively slow and memory intensive. The online EM algorithm overcomes these limitations by:
 
-The key aspects of the online phase include:
+- **Processing Fragments Incrementally:** Data are handled one fragment—or small mini-batches of fragments—at a time.
+- **Gradual Updating:** Each new fragment contributes to updating transcript counts, with older fragments’ influences gradually diminished by a “forgetting mass.”
+- **Concurrent Learning of Auxiliary Parameters:** Parameters that account for biases (e.g., sequence-specific, GC-content) and the fragment-length distribution are updated concurrently, ensuring that all aspects of the generative model are refined as more data arrive.
 
-1.  **Streaming Inference**: The algorithm processes data in mini-batches, allowing for efficient and parallel processing. This approach helps Salmon to quickly adjust its estimates of transcript abundances as more data are processed.
-2.  **Variational Bayesian Inference**: By employing a form of variational Bayesian inference, Salmon approximates the posterior distribution of transcript abundances. This statistical framework allows for the incorporation of prior knowledge and the estimation of uncertainty in the abundance estimates.
-3.  **Equivalence Classes**: Salmon groups together sequenced fragments into equivalence classes based on their compatibility with the same set of transcripts. This reduces the computational complexity of the inference process and enables more efficient optimization.
-4.  **Bias Models**: The online phase involves the estimation of models to correct for known biases in the sequencing data. These in clude sequence-specific biases and biases related to the sequencing process itself. By correcting for these biases, Salmon aims to produce more accurate estimates of transcript abundances.
-5.  **Adaptation to Data**: The algorithm dynamically updates its estimates and models based on the data observed in each mini-batch. This adaptive approach allows Salmon to refine its predictions as more information becomes available.
+#### Updating transcript counts
 
-In summary, the online inference phase of Salmon is a sophisticated computational strategy designed to accurately estimate transcript abundances from RNA-seq data. By leveraging variational Bayesian inference and efficient data processing techniques, Salmon addresses the challenges of bias correction and data complexity, ultimately aiming to provide accurate and reliable estimates of transcript abundances in a computationally efficient manner.
+> [!caution]
+> The notation here needs a lot of work and is not consistent or correct.
+> I need to unify the notation between [eXpress](https://doi.org/10.1038/nmeth.2251) and [salmon](https://doi.org/10.1038/nmeth.4197).
+
+Let $\alpha_t^{i}$ be the estimated count for transcript $t$ after processing $i$ fragments.
+When a new fragment (or mini-batch) is processed, its contribution a transcript is denoted by $\Delta \alpha_t^{i}$.
+The update rule is given by:
+
+$$
+\alpha_t^{i+1} = \alpha_t^{i} + m_i \, \Delta \alpha_i^{(i)}
+$$
+
+Here:
+
+- $\Delta \alpha_i^{(t)} = \sum_{f_j \in B_t} \Pr\{ f_j \mid t_i \}$ is the aggregate contribution from the current mini-batch $B_t$ of fragments.
+- $m_t$ is the forgetting mass at iteration $t$, which controls the weight given to new data relative to the accumulated estimate.
+
+#### Forgetting mass
+
+The forgetting factor $\gamma_t$ plays a pivotal role in the online EM algorithm.
+Conceptually, it addresses two key issues:
+
+- **Adaptability:** Early in the analysis, the estimates are based on limited data, so each new fragment should have a large impact. As more fragments are processed, the estimates become more reliable, and new data should only induce small refinements.
+- **Stability:** The diminishing weight ensures that the algorithm does not overreact to fluctuations in the data. Over time, the influence of individual fragments decreases, allowing the estimates to converge to a stable solution.
+
+This approach is analogous to computing a running average where the initial estimates are volatile but gradually stabilize as the sample size increases.
+
+A common choice for the forgetting mass is:
+
+$$
+m_{i + 1} = m_i \left( \frac{\gamma_{i + 1}}{1 - \gamma_i} \right) \frac{1}{\gamma_i}
+$$
+
+which is dependent on the forgetting factor
+
+$$
+\gamma_i = \frac{1}{i^c} \quad \text{with } 0.5 < c \leq 1,
+$$
+
+#### Normalizing to Obtain Relative Abundances
+
+Once the counts $\alpha_i$ are updated, the relative abundance (or probability) for transcript $t_i$ is computed by normalizing these counts:
+
+$$
+\tau_i = \frac{\alpha_i^{(t)}}{\sum_{r \in T} \alpha_r^{(t)}}
+$$
+
+This normalization converts the raw counts into a probability distribution over the transcripts, representing the estimated relative abundances.
+
+#### Updating Auxiliary Parameters
+
+In parallel with updating $\alpha_i$, the algorithm also updates parameters that describe:
+
+-   **Fragment Length Distribution:** This is based on the empirical distribution of fragment lengths observed in the data.
+-   **Sequence-Specific Bias Models:** Parameters for variable-length Markov models (VLMMs) that capture preferential sequence patterns at fragment ends.
+-   **GC Bias Models:** Distributions that account for the influence of fragment GC content on sequencing probabilities.
+
+For example, suppose that $\theta$ represents an auxiliary parameter (such as a bias weight) estimated from the observed fragments.
+Its update might be integrated similarly to the transcript counts:
+
+$$
+\theta^{(t+1)} = \theta^{(t)} + \gamma_t \, \Delta \theta^{(t)},
+$$
+
+where $\Delta \theta^{(t)}$ reflects the contribution of the current mini-batch to the parameter update. By updating these parameters concurrently, the algorithm refines both the primary and auxiliary components of the model as more data become available.
+
+### Convergence Properties
+
+Under mild regularity conditions and with an appropriate choice of the forgetting factor (e.g., $\gamma_t = 1/t^c$ with $0.5 < c \leq 1$), the online EM algorithm converges to a maximum-likelihood solution. The algorithm is asymptotically equivalent to stochastic gradient ascent in the space of sufficient statistics. This means that, although the data are processed in a streaming manner, the final abundance estimates will be very similar to those obtained by a full batch EM algorithm, but at a fraction of the computational cost and memory usage.
 
 ### Offline
 
-Offline inference describes a computational process that takes place after the initial, or "online," analysis of RNA sequencing data by the Salmon software. This phase leverages the data and preliminary analyses obtained from the online phase to refine the estimates of transcript abundance, essentially polishing the results for greater accuracy.
+The offline inference phase refines the initial transcript abundance estimates generated during the online phase by operating on a compact representation of the data—specifically, the "rich equivalence classes" of fragments.
+While the online phase rapidly processes fragments in a streaming manner to provide a coarse solution, the offline phase uses iterative optimization techniques to fine-tune these estimates, ensuring a more precise and robust quantification of transcript abundances.
 
--   **Rich Equivalence Classes**: In the offline phase, Salmon utilizes "rich equivalence classes" constructed during the online phase. These classes group fragments (reads or parts of reads from sequencing) that are likely to come from the same set of transcripts, thereby reducing computational complexity and focusing efforts on distinguishing between transcripts that share many fragments in common.
--   **Expectation-Maximization (EM) Algorithm**: The core of the offline inference phase is an optimization process using the EM algorithm. This algorithm iteratively improves the estimates of how many fragments come from each transcript, effectively fine-tuning the abundance measurements. It does this by maximizing the likelihood of observing the given data under the model, adjusting transcript abundance estimates to fit the observed data better.
--   **Variational Bayes Optimization**: Optionally, Salmon can perform variational Bayesian (VB) optimization instead of standard EM updates. This approach involves approximating the true posterior distribution of transcript abundances with a simpler distribution, then iteratively updating this approximation to make it as close as possible to the true posterior. This method is particularly useful for managing computational complexity and uncertainty.
--   **Convergence Criterion**: The offline phase continues iterating until the changes in the estimates of transcript abundance fall below a pre-defined threshold, indicating that further iterations are unlikely to significantly alter the results. This criterion ensures that the algorithm stops when it has effectively converged on a stable solution.
+After the online phase, we obtain preliminary transcript counts that capture the main structure of the data. However, processing every individual fragment repeatedly is computationally expensive and unnecessary. Instead, fragments are grouped into equivalence classes based on their mapping profiles—fragments that map to the same set of transcripts with similar conditional probabilities are aggregated together. This reduction in data dimensionality allows the offline phase to efficiently re-optimize the abundance estimates by working on these groups rather than the entire dataset.
 
-#### Posterior sampling
+#### Equivalence Classes and Likelihood Factorization
 
-Posterior sampling details a statistical method used in the offline phase of the Salmon software to estimate the distribution of transcript abundances from RNA sequencing data. This method allows for the quantification of the uncertainty in transcript abundance estimates, providing more than just point estimates.
+Let $C = \{C_1, C_2, \dots, C_K\}$ denote the set of equivalence classes. For each equivalence class $C_j$, we define:
 
--   **Gibbs Sampling**: This is a Markov Chain Monte Carlo (MCMC) algorithm used to generate a sequence of samples from the posterior distribution of transcript abundances. Salmon's implementation of Gibbs sampling iteratively samples transcript abundances given the fragment assignments (i.e., which transcripts the sequenced fragments are likely to come from) and then reassigns fragments to transcripts based on these sampled abundances. This process helps in understanding the variability and confidence in the abundance estimates.
--   **Bootstrap Sampling**: An alternative method to Gibbs sampling, bootstrap sampling involves generating multiple resampled datasets from the original sequencing data by sampling with replacement. For each resampled dataset, the offline inference procedure is rerun to produce new estimates of transcript abundances. This method is used to assess the stability and reliability of the abundance estimates by observing how they vary across the resampled datasets.
+-   $d_j = |C_j|$, the total number of fragments in the class.
+-   A weight vector $\mathbf{w}_j$ such that $w_{j,t}$ is the average conditional probability $\Pr\{ f \mid t \}$ for fragments in $C_j$ with respect to transcript $t$.
+
+Using these equivalence classes, the overall likelihood function can be factorized as:
+
+$$
+L(\pmb{\tau}) \propto \prod_{j=1}^{K} \left( \sum_{t \in T_j} w_{j,t} \, \tau_t \right)^{d_j},
+$$
+
+where:
+
+- $\tau_t$ is the relative abundance for transcript $t$ (with $\sum_{t} \tau_t = 1$),
+- $T_j$ is the set of transcripts to which fragments in $C_j$ map.
+
+This factorization reduces the computational burden, as the likelihood now involves summations over equivalence classes rather than over millions of individual fragments.
+
+### EM Algorithm for Offline Refinement
+
+The offline phase typically employs an iterative EM (Expectation–Maximization) algorithm to maximize the above likelihood function. The process involves two main steps:
+
+#### Expectation Step (E-Step)
+For each equivalence class $C_j$ and transcript $t \in T_j$, the algorithm computes the expected contribution of $C_j$ to the count of transcript $t$ using the current abundance estimates. This is given by:
+
+$$
+E_{j,t} = d_j \frac{w_{j,t} \, \tau_t}{\sum_{r \in T_j} w_{j,r} \, \tau_r}.
+$$
+
+This term represents the fraction of the $d_j$ fragments in $C_j$ that are expected to originate from transcript $t$.
+
+#### Maximization Step (M-Step)
+Using the expected contributions from the E-step, the counts for each transcript are updated:
+
+$$
+\alpha_t^{(\text{new})} = \sum_{j=1}^{K} E_{j,t}.
+$$
+
+The relative abundance estimates are then obtained by normalizing these counts:
+
+$$
+\tau_t = \frac{\alpha_t^{(\text{new})}}{\sum_{r \in T} \alpha_r^{(\text{new})}}.
+$$
+
+These steps are iterated until convergence—typically defined as the point where the maximum relative change in the estimated counts between iterations falls below a predetermined threshold.
+
+### Variational Bayesian Extensions
+
+In some implementations, a variational Bayesian (VB) version of the EM algorithm is used in the offline phase. This approach not only provides point estimates for transcript abundances but also approximates the posterior distribution of these estimates. Such a posterior can be useful for quantifying the uncertainty in transcript abundance estimates, offering richer information for downstream analyses.
+
+### Summary
+
+The offline inference phase takes the initial, coarse estimates from the online phase and refines them by:
+- **Aggregating fragments into equivalence classes:** This reduction captures essential information while significantly lowering computational costs.
+- **Applying an iterative EM algorithm:** The E-step computes expected fragment contributions, and the M-step updates the abundance estimates until convergence.
+- **Optionally using variational Bayesian methods:** These methods yield both point estimates and uncertainty measures.
+
+By leveraging these techniques, the offline phase ensures that the final transcript abundance estimates are both highly accurate and computationally tractable, even when working with extremely large RNA-seq datasets.
 
 <!-- REFERENCES -->
 
