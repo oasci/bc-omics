@@ -19,7 +19,7 @@ markup:
       passthrough:
         delimiters:
           block: [['\[', '\]'], ['$$', '$$']]
-          inline: [['\(', '\)']]
+          inline: [['\(', '\)'], ['$', '$']]
         enable: true
 
   # enable hextra syntax highlight
