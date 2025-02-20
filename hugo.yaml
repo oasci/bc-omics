@@ -1,6 +1,6 @@
 # Hugo configuration file
 title: Omics
-baseURL: https://handbook.oasci.org/
+baseURL: https://omics.crumblearn.org/
 languageCode: en-us
 
 enableGitInfo: true
@@ -49,7 +49,7 @@ menu:
         type: search
     - name: GitHub
       weight: 6
-      url: "https://github.com/oasci/handbook"
+      url: "https://github.com/oasci/bc-omics"
       params:
         icon: github
 
@@ -88,4 +88,4 @@ params:
 
   editURL:
     enable: true
-    base: "https://github.com/oasci/handbook/edit/main/content"
+    base: "https://github.com/oasci/bc-omics/edit/main/content"
