@@ -1,7 +1,5 @@
 module github.com/oasci/bc-omics
 
-go 1.21
+go 1.24
 
-require (
-	github.com/oasci/crumblearn.org v0.0.0-20250226125443-544864b4a33c // indirect
-)
+require github.com/oasci/breadpan v0.0.0-20250525040733-cc4fbc35fa47 // indirect
